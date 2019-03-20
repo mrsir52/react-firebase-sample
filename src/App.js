@@ -1,7 +1,9 @@
 import React, { Component } from "react";
 import logo from "./logo.svg";
 import "./App.css";
-import firebase from "./firebase";
+import firebase, { auth, provider } from "./firebase";
+import LogHours from "./LogHours"
+
 
 class App extends Component {
   constructor() {
@@ -9,34 +11,58 @@ class App extends Component {
     this.state = {
       hoursWorked: "",
       username: "",
-      items: []
+      items: [],
+      user: null
     };
-    
+    this.login = this.login.bind(this);
+    this.logout = this.logout.bind(this);
   }
 
   handleChange = e => {
     this.setState({
       [e.target.name]: e.target.value
     });
-  }
+  };
 
-  handleSubmit = e => {
-    e.preventDefault();
-    const itemsRef = firebase.database().ref('items');
-    const item = {
-      title: this.state.hoursWorked,
-      user: this.state.username
-    }
-    itemsRef.push(item);
-    this.setState({
-      hoursWorked: '',
-      username: ''
+  logout() {
+    auth.signOut().then(() => {
+      this.setState({
+        user: null
+      });
     });
   }
 
+  login() {
+    auth.signInWithPopup(provider).then(result => {
+      const user = result.user;
+      this.setState({
+        user
+      });
+    });
+  }
+  handleSubmit = e => {
+    e.preventDefault();
+    const itemsRef = firebase.database().ref("items");
+    const item = {
+      title: this.state.hoursWorked,
+      // user: this.state.user.displayName || this.state.user.email
+    };
+    itemsRef.push(item);
+    this.setState({
+      hoursWorked: "",
+      username: ""
+    });
+  };
+
   componentDidMount() {
-    const itemsRef = firebase.database().ref('items');
-    itemsRef.on('value', (snapshot) => {
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        this.setState({ user });
+      }
+    });
+
+    const itemsRef = firebase.database().ref("items");
+    itemsRef.on("value", snapshot => {
       let items = snapshot.val();
       let newState = [];
       for (let item in items) {
@@ -52,61 +78,88 @@ class App extends Component {
     });
   }
 
-  removeItem(itemId) {
+  removeItem = itemId => {
     const itemRef = firebase.database().ref(`/items/${itemId}`);
     itemRef.remove();
-  }
+  };
   render() {
-    console.log(this.state)
+    console.log(this.state.user);
     return (
       <div className="app">
         <header>
           <div className="wrapper">
-            <h1>Fun Food Friends</h1>
+            <h1>Time Card</h1>
+            {this.state.user ? (
+              <button onClick={this.logout}>Logout</button>
+            ) : (
+              <button onClick={this.login}>Log In</button>
+            )}
           </div>
         </header>
-        <div className="container">
-          <section className="add-item">
-            <form onSubmit={this.handleSubmit}>
-              <input
-                type="text"
-                name="username"
-                placeholder="What's your name?"
-                onChange={this.handleChange}
-                value={this.state.username}
-              />
-              <input
-                type="text"
-                name="hoursWorked"
-                placeholder="How many hours did you work?"
-                onChange={this.handleChange}
-                value={this.state.hoursWorked}
-              />
-              <button>Add Item</button>
-            </form>
-          </section>
-          <section className="display-item">
-            <div className="wrapper">
-              <ul />
+        {this.state.user ? (
+          <div>
+            <div className="user-profile">
+              {/* <img src={this.state.user.photoURL} /> */}
             </div>
-          </section>
-        </div>
-        <section className='display-item'>
-              <div className="wrapper">
-                <ul>
-                  {this.state.items.map((item) => {
-                    return (
-                      <li key={item.id}>
-                        <h3>Hours worked: {item.title}</h3>
-                        <p>Worked by: {item.user}
-                          <button onClick={() => this.removeItem(item.id)}>Remove Item</button>
-                        </p>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-          </section>
+          </div>
+        ) : (
+          <div className="wrapper">
+            <p>
+              You must be logged in to see the potluck list and submit to it.
+            </p>
+          </div>
+        )}
+
+        {/* Start of form */}
+        {this.state.user ?
+          <div>
+            <ul className="nav">
+  <li className="nav-item">
+    <a className="nav-link active" href="#">Log Hours</a>
+  </li>
+  <li className="nav-item">
+    <a className="nav-link" href="#">View Previous</a>
+  </li>
+  <li className="nav-item">
+    <a className="nav-link" href="#">Link</a>
+  </li>
+  <img src={this.state.user.photoURL} height="50px"/>
+</ul>
+<LogHours />
+            
+            {/* <div className='container'>
+              <section className='add-item'>
+                    <form onSubmit={this.handleSubmit}>
+                      <input type="text" name="username" placeholder="What's your name?" onChange={this.handleChange} value={this.state.user.displayName || this.state.user.email} />
+                      <input type="text" name="hoursWorked" placeholder="What are you bringing?" onChange={this.handleChange} value={this.state.hoursWorked} />
+                      <button>Add Item</button>
+                    </form>
+              </section>
+
+              <section className='display-item'>
+                  <div className="wrapper">
+                    <ul>
+                      {this.state.items.map((item) => {
+                        return (
+                          <li key={item.id}>
+                            <h3>{item.title}</h3>
+                            <p>Hours worked: {item.user}
+                              {item.user === this.state.user.displayName || item.user === this.state.user.email ?
+                                <button onClick={() => this.removeItem(item.id)}>Remove Item</button>
+                              : null}
+                            </p>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+              </section>
+            </div> */}
+          </div>
+        : 
+          <p>You must be logged in to see the potluck list and submit to it.</p>
+        }
+        
       </div>
     );
   }
