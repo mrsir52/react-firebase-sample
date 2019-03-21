@@ -127,34 +127,7 @@ class App extends Component {
 </ul>
 <LogHours />
             
-            {/* <div className='container'>
-              <section className='add-item'>
-                    <form onSubmit={this.handleSubmit}>
-                      <input type="text" name="username" placeholder="What's your name?" onChange={this.handleChange} value={this.state.user.displayName || this.state.user.email} />
-                      <input type="text" name="hoursWorked" placeholder="What are you bringing?" onChange={this.handleChange} value={this.state.hoursWorked} />
-                      <button>Add Item</button>
-                    </form>
-              </section>
-
-              <section className='display-item'>
-                  <div className="wrapper">
-                    <ul>
-                      {this.state.items.map((item) => {
-                        return (
-                          <li key={item.id}>
-                            <h3>{item.title}</h3>
-                            <p>Hours worked: {item.user}
-                              {item.user === this.state.user.displayName || item.user === this.state.user.email ?
-                                <button onClick={() => this.removeItem(item.id)}>Remove Item</button>
-                              : null}
-                            </p>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-              </section>
-            </div> */}
+            
           </div>
         : 
           <p>You must be logged in to see the potluck list and submit to it.</p>
